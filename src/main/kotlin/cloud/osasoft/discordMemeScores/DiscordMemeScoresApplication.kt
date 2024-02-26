@@ -1,11 +1,8 @@
 package cloud.osasoft.discordMemeScores
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
+import cloud.osasoft.discordMemeScores.config.DiscordProperties
+import me.jakejmattson.discordkt.dsl.bot
 
-@SpringBootApplication
-class DiscordMemeScoresApplication
-
-fun main(args: Array<String>) {
-	runApplication<DiscordMemeScoresApplication>(*args)
+fun main() {
+    bot(DiscordProperties.getToken()) {}
 }
