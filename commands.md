@@ -6,9 +6,10 @@
 | [Argument]  | Argument is not required.      |
 
 ## Memes
-| Commands   | Arguments | Description |
-|------------|-----------|-------------|
-| countMemes |           |             |
+| Commands  | Arguments | Description |
+|-----------|-----------|-------------|
+| memeScore |           |             |
+| memeStats |           |             |
 
 ## Test
 | Commands | Arguments | Description |
