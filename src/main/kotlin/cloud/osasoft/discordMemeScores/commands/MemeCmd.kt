@@ -1,15 +1,19 @@
 package cloud.osasoft.discordMemeScores.commands
 
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.entity.Message
+import dev.kord.core.entity.effectiveName
+import dev.kord.rest.builder.message.embed
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.toKotlinInstant
 import me.jakejmattson.discordkt.TypeContainer
 import me.jakejmattson.discordkt.commands.GuildSlashCommandEvent
 import me.jakejmattson.discordkt.commands.commands
-import me.jakejmattson.discordkt.util.author
 import me.jakejmattson.discordkt.util.isImagePost
+import me.jakejmattson.discordkt.util.pfpUrl
+import me.jakejmattson.discordkt.util.profileLink
 import me.jakejmattson.discordkt.util.toPartialEmoji
 import java.time.Instant
 import java.util.regex.Pattern
@@ -23,8 +27,7 @@ fun memeListener() = commands("Memes") {
     suspend fun <T : TypeContainer> getMemes(
         event: GuildSlashCommandEvent<T>,
         cutOffDate: Instant,
-    ): List<Message> = event.channel.messages
-        .takeWhile { it.timestamp >= cutOffDate.toKotlinInstant() }
+    ): List<Message> = event.channel.getMessagesAfter(messageId = Snowflake(cutOffDate.toKotlinInstant()))
         .filter { it.author?.id == event.author.id }
         .filter { it.isImagePost() }
         .toList()
@@ -32,6 +35,8 @@ fun memeListener() = commands("Memes") {
     slash("memeStats") {
         execute {
             val cutOffDuration = 7.days
+            respond { description = "Gathering meme stats for the past $cutOffDuration..." }
+
             val cutOffDate = Instant.now() - cutOffDuration.toJavaDuration()
 
             val author = this.author
@@ -51,16 +56,22 @@ fun memeListener() = commands("Memes") {
                 }
             }
 
-            this.respondPublic {
-                this.author(author)
-                title = "Meme Stats"
-                description = buildString {
-                    append("${author.username} has posted ${memes.size} memes in the past $cutOffDuration")
-                    if (memes.isNotEmpty()) {
-                        appendLine()
-                        append("Gathering the following reactions:")
-                        appendLine()
-                        reactions.forEach { (emoji, count) -> appendLine("$emoji : $count") }
+            channel.createMessage {
+                embed {
+                    author {
+                        this.name = author.effectiveName
+                        this.icon = author.pfpUrl
+                        this.url = author.profileLink
+                    }
+                    title = "Meme Stats"
+                    description = buildString {
+                        append("${author.username} has posted ${memes.size} memes in the past $cutOffDuration")
+                        if (memes.isNotEmpty()) {
+                            appendLine()
+                            append("Gathering the following reactions:")
+                            appendLine()
+                            reactions.forEach { (emoji, count) -> appendLine("$emoji : $count") }
+                        }
                     }
                 }
             }
@@ -70,6 +81,7 @@ fun memeListener() = commands("Memes") {
     slash("memeScore") {
         execute {
             val cutOffDuration = 7.days
+            respond { description = "Calculating meme score for the past $cutOffDuration..." }
             val cutOffDate = Instant.now() - cutOffDuration.toJavaDuration()
 
             val author = this.author
@@ -87,10 +99,17 @@ fun memeListener() = commands("Memes") {
 
             val score = positiveScore - negativeScore
 
-            this.respondPublic {
-                this.author(author)
-                title = "Meme Score: $score"
-                description = "Positive score: $positiveScore, Negative score: $negativeScore"
+            channel.createMessage {
+                embed {
+                    author {
+                        this.name = author.effectiveName
+                        this.icon = author.pfpUrl
+                        this.url = author.profileLink
+                    }
+                    title = "Meme Score: $score"
+                    description = "Positive score: $positiveScore, Negative score: $negativeScore"
+                }
+
             }
         }
     }

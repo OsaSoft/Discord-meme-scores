@@ -8,7 +8,11 @@ import me.jakejmattson.discordkt.dsl.bot
 fun main() {
     bot(DiscordProperties.getToken()) {
         configure {
-            defaultPermissions = Permissions(Permission.ReadMessageHistory, Permission.SendMessages)
+            defaultPermissions = Permissions(
+                Permission.ReadMessageHistory,
+                Permission.SendMessages,
+                Permission.UseExternalEmojis,
+            )
         }
     }
 }
