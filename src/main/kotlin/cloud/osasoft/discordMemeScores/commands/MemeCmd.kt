@@ -21,12 +21,20 @@ fun memeListener() = commands("Memes") {
 
 
     suspend fun <T : TypeContainer> getMemes(
-            event: GuildSlashCommandEvent<T>,
-            cutOffDate: Instant,
+        event: GuildSlashCommandEvent<T>,
+        cutOffDate: Instant,
     ): List<Message> = event.channel.getMessagesAfter(messageId = Snowflake(cutOffDate.toKotlinInstant()))
-            .filter { it.author?.id == event.author.id }
-            .filter { it.isImagePost() }
-            .toList()
+        .filter { it.author?.id == event.author.id }
+        .filter { message ->
+            val embedType = message.data.embeds.firstOrNull()?.type?.value.toString()
+            message.isImagePost() ||
+            embedType.endsWith(".Gifv") ||
+            embedType.endsWith(".Image") ||
+            embedType.endsWith(".Video")
+            // article in case you want to count with embeds that contain text and thumbnail e.g.: 9gag links
+            // || embedType.endsWith(".Article")
+        }
+        .toList()
 
     slash("memeStats") {
         execute {
