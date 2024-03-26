@@ -3,6 +3,7 @@ package cloud.osasoft.discordMemeScores.commands
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.entity.Message
+import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.effectiveName
 import dev.kord.rest.builder.message.embed
 import kotlinx.coroutines.flow.filter
@@ -11,25 +12,28 @@ import kotlinx.datetime.toKotlinInstant
 import me.jakejmattson.discordkt.TypeContainer
 import me.jakejmattson.discordkt.commands.GuildSlashCommandEvent
 import me.jakejmattson.discordkt.commands.commands
-import me.jakejmattson.discordkt.util.isImagePost
-import me.jakejmattson.discordkt.util.pfpUrl
-import me.jakejmattson.discordkt.util.profileLink
-import me.jakejmattson.discordkt.util.toPartialEmoji
+import me.jakejmattson.discordkt.util.*
 import java.time.Instant
-import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
 
 fun memeListener() = commands("Memes") {
 
-    val emojiPattern = Pattern.compile("\\p{IsEmoji}").toRegex()
 
     suspend fun <T : TypeContainer> getMemes(
         event: GuildSlashCommandEvent<T>,
         cutOffDate: Instant,
     ): List<Message> = event.channel.getMessagesAfter(messageId = Snowflake(cutOffDate.toKotlinInstant()))
         .filter { it.author?.id == event.author.id }
-        .filter { it.isImagePost() }
+        .filter { message ->
+            val embedType = message.data.embeds.firstOrNull()?.type?.value.toString()
+            message.isImagePost() ||
+            embedType.endsWith(".Gifv") ||
+            embedType.endsWith(".Image") ||
+            embedType.endsWith(".Video")
+            // article in case you want to count with embeds that contain text and thumbnail e.g.: 9gag links
+            // || embedType.endsWith(".Article")
+        }
         .toList()
 
     slash("memeStats") {
@@ -44,12 +48,11 @@ fun memeListener() = commands("Memes") {
 
             val reactions: Map<String, Int> = buildMap {
                 memes.flatMap { it.reactions }.forEach { reaction ->
-                    val name = if (reaction.emoji.name.matches(emojiPattern)) {
+                    val name = if (reaction.emoji is ReactionEmoji.Unicode) {
                         reaction.emoji.name
                     } else { // Custom emoji
-                        val name = reaction.emoji.name
-                        val id = reaction.emoji.toPartialEmoji().id?.value ?: ""
-                        "<:$name:$id>"
+                        val customEmoji = reaction.emoji.urlFormat
+                        "<:$customEmoji>"
                     }
                     val currentCount = getOrDefault(name, 0)
                     put(name, currentCount + reaction.count)
