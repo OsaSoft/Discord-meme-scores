@@ -26,13 +26,7 @@ fun memeListener() = commands("Memes") {
     ): List<Message> = event.channel.getMessagesAfter(messageId = Snowflake(cutOffDate.toKotlinInstant()))
         .filter { it.author?.id == event.author.id }
         .filter { message ->
-            val embedType = message.data.embeds.firstOrNull()?.type?.value.toString()
-            message.isImagePost() ||
-            embedType.endsWith(".Gifv") ||
-            embedType.endsWith(".Image") ||
-            embedType.endsWith(".Video")
-            // article in case you want to count with embeds that contain text and thumbnail e.g.: 9gag links
-            // || embedType.endsWith(".Article")
+            message.isImagePost() || isEmbedMeme(message) || isVideoMeme(message)
         }
         .toList()
 
