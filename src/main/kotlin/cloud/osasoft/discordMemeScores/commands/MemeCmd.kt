@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.toKotlinInstant
 import me.jakejmattson.discordkt.TypeContainer
+import me.jakejmattson.discordkt.arguments.IntegerArg
 import me.jakejmattson.discordkt.commands.GuildSlashCommandEvent
 import me.jakejmattson.discordkt.commands.commands
-import me.jakejmattson.discordkt.util.*
+import me.jakejmattson.discordkt.util.isImagePost
+import me.jakejmattson.discordkt.util.pfpUrl
+import me.jakejmattson.discordkt.util.profileLink
 import java.time.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.toJavaDuration
@@ -28,17 +31,18 @@ fun memeListener() = commands("Memes") {
         .filter { message ->
             val embedType = message.data.embeds.firstOrNull()?.type?.value.toString()
             message.isImagePost() ||
-            embedType.endsWith(".Gifv") ||
-            embedType.endsWith(".Image") ||
-            embedType.endsWith(".Video")
+                    embedType.endsWith(".Gifv") ||
+                    embedType.endsWith(".Image") ||
+                    embedType.endsWith(".Video")
             // article in case you want to count with embeds that contain text and thumbnail e.g.: 9gag links
             // || embedType.endsWith(".Article")
         }
         .toList()
 
     slash("memeStats") {
-        execute {
-            val cutOffDuration = 7.days
+        execute(IntegerArg("days").optional(7)) {
+            val input = args.first
+            val cutOffDuration = if (args.first in 1..365) args.first.days else 7.days
             respond { description = "Gathering meme stats for the past $cutOffDuration..." }
 
             val cutOffDate = Instant.now() - cutOffDuration.toJavaDuration()
@@ -82,8 +86,9 @@ fun memeListener() = commands("Memes") {
     }
 
     slash("memeScore") {
-        execute {
-            val cutOffDuration = 7.days
+        execute(IntegerArg("days").optional(7)) {
+            val input = args.first
+            val cutOffDuration = if (args.first in 1..365) args.first.days else 7.days
             respond { description = "Calculating meme score for the past $cutOffDuration..." }
             val cutOffDate = Instant.now() - cutOffDuration.toJavaDuration()
 
