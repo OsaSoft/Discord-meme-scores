@@ -58,10 +58,10 @@ fun memeListener() = commands("Memes") {
                         val customEmoji = reaction.emoji.urlFormat
                         "<:$customEmoji>"
                     }
-                    val currentCount = getOrDefault(name, 0)
+                    val currentCount: Int = getOrDefault(name, 0)
                     put(name, currentCount + reaction.count)
                 }
-            }
+            }.toList().sortedBy { (_, count) -> count }.toMap()
 
             channel.createMessage {
                 embed {
@@ -114,7 +114,7 @@ fun memeListener() = commands("Memes") {
                         this.icon = author.pfpUrl
                         this.url = author.profileLink
                     }
-                    title = "Meme Score: $score"
+                    title = "Meme Score for the past $cutOffDuration: $score"
                     description = "Positive score: $positiveScore, Negative score: $negativeScore"
                 }
 
